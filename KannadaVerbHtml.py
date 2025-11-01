@@ -1,108 +1,50 @@
 import streamlit as st
 from io import BytesIO
-import zipfile
 
-# ✅ Optional DOCX library (auto handles missing one)
-try:
-    from docx import Document
-    DOCX_AVAILABLE = True
-except ImportError:
-    DOCX_AVAILABLE = False
+st.set_page_config(page_title="Kannada Verb Sentence Generator", layout="centered")
 
-# ✅ List of 50 Kannada verbs
-verbs = [
-    "ತಿನ್ನು", "ಕುಡಿ", "ಓದು", "ಬರೆಯು", "ಹೋಗು", "ಬಾ", "ನೋಡು", "ಕೇಳು", "ಮಲಗು", "ನಿಲ್ಲು",
-    "ಕುಳಿತು", "ಕೂರು", "ನಗು", "ಅಳು", "ನಡೆಯು", "ಓಡು", "ಎದ್ದು", "ತಗೆದುಕೋ", "ಕೊಡು", "ಇಡು",
-    "ತೆರೆ", "ಮುಚ್ಚು", "ತೋರಿಸು", "ಹೇಳು", "ಕೇಳು", "ಮಾಡು", "ಇರು", "ಬಸು", "ತಗೆ", "ಬೀಳು",
-    "ನಿಲ್ಲಿಸು", "ಹರಿ", "ಆಡು", "ಕಲಿತುಕೋ", "ನೆನಪುಮಾಡು", "ಮರೆತುಬಿಡು", "ನೋಡಿಕೊಳ್ಳು",
-    "ಹೋಗಿಬಿಡು", "ತರಲು", "ಕತ್ತರಿಸು", "ತೊಳೆಯು", "ತಿನ್ನಿಸು", "ಹೊಡೆ", "ಹಿಡಿ",
-    "ಓದಿ", "ಹಾಡು", "ನೃತ್ಯಮಾಡು", "ನಿಲ್ಲಿಸು", "ಕಳೆ", "ಗೆಲ್ಲು"
-]
+st.markdown("""
+<h1 style='text-align:center; color:#4CAF50;'>📘 ಕನ್ನಡ ಕ್ರಿಯಾಪದ ವಾಕ್ಯ ರಚನೆ</h1>
+<p style='text-align:center;'>ಒಂದು ಕ್ರಿಯಾಪದ ಮತ್ತು ಒಂದು ವಸ್ತು ನೀಡಿ — ಎಲ್ಲಾ ಕಾಲಗಳಲ್ಲಿ ವಾಕ್ಯಗಳು ರಚಿಸಲಾಗುತ್ತದೆ</p>
+""", unsafe_allow_html=True)
 
-# ✅ Function to generate Kannada tense sentences (placeholder structure)
-def generate_html(verb):
-    html_content = f"""
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        body {{
-          font-family: 'Noto Sans Kannada', sans-serif;
-          background-color: #f9f9f9;
-          padding: 20px;
-          line-height: 1.8;
-          font-size: 20px;
-        }}
-        h2 {{
-          color: #2b4b7c;
-        }}
-        .person {{
-          margin-top: 25px;
-          background: #fff;
-          border-radius: 10px;
-          padding: 15px;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }}
-      </style>
-    </head>
-    <body>
-      <h2>ಕ್ರಿಯಾಪದ: {verb}</h2>
-      <div class="person">
-        🧍 ನಾನು <br>
-        ಹಿಂದಿನ ಕಾಲ: ನಾನು ನಿನ್ನೆ {verb}ದೆಯೆ. <br>
-        → ಮೈ ಕಲ್ {verb} ಕಿಯಾ. <br><br>
-        ವರ್ತಮಾನ ಕಾಲ: ನಾನು ಈಗ {verb}ತ್ತಿದ್ದೇನೆ. <br>
-        → ಮೈ ಅಭಿ {verb} ರಹಾ ಹೂಂ. <br><br>
-        ಭವಿಷ್ಯತ್ತಿನ ಕಾಲ: ನಾನು ನಾಳೆ {verb}ತ್ತೇನೆ. <br>
-        → ಮೈ ಕಲ {verb} ಕರೂಂಗಾ. <br>
-      </div>
-    </body>
-    </html>
-    """
-    return html_content
+# User Inputs
+verb = st.text_input("🔤 ಕ್ರಿಯಾಪದ (ಉದಾ: ತಿನ್ನು, ಕುಡಿ, ಓದು):")
+obj = st.text_input("🍎 ವಸ್ತು / ವಿಷಯ (ಉದಾ: ಹಣ್ಣು, ನೀರು, ಕೆಲಸ):")
 
-# ✅ Streamlit UI
-st.title("📘 ಕನ್ನಡ ಕ್ರಿಯಾಪದ ಪಾಠಗಳು - HTML & DOCX ಡೌನ್‌ಲೋಡ್")
+# Function to generate Kannada sentences
+def generate_sentences(verb, obj):
+    persons = {
+        "ನಾನು": ["ತಿಂದೆ", "ತಿನ್ನುತ್ತಿದ್ದೇನೆ", "ತಿನ್ನುವೆ"],
+        "ನೀನು": ["ತಿಂದೆ", "ತಿನ್ನುತ್ತಿದ್ದೀಯ", "ತಿನ್ನುವೆ"],
+        "ಅವನು": ["ತಿಂದ", "ತಿನ್ನುತ್ತಿದ್ದಾನೆ", "ತಿನ್ನುತ್ತಾನೆ"],
+        "ಅವಳು": ["ತಿಂದಳು", "ತಿನ್ನುತ್ತಿದ್ದಾಳೆ", "ತಿನ್ನುತ್ತಾಳೆ"],
+        "ನಾವು": ["ತಿಂದೆವು", "ತಿನ್ನುತ್ತಿದ್ದೇವೆ", "ತಿನ್ನುವೆವು"],
+        "ನೀವು": ["ತಿಂದಿರಿ", "ತಿನ್ನುತ್ತಿದ್ದೀರಿ", "ತಿನ್ನುವಿರಿ"],
+        "ಅವರು": ["ತಿಂದರು", "ತಿನ್ನುತ್ತಿದ್ದಾರ", "ತಿನ್ನುವರು"]
+    }
 
-st.write("👇 ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ 50 ಕ್ರಿಯಾಪದಗಳ HTML ಫೈಲುಗಳನ್ನು ZIP ಆಗಿ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿರಿ")
+    html = "<div style='font-size:20px; line-height:1.8;'>"
+    for person, tenses in persons.items():
+        html += f"<h3>🧍 {person}</h3>"
+        html += f"<b>ಹಿಂದಿನ ಕಾಲ:</b> {person} ನಿನ್ನೆ {obj} {tenses[0]}<br>"
+        html += f"<b>ವರ್ತಮಾನ ಕಾಲ:</b> {person} ಈಗ {obj} {tenses[1]}<br>"
+        html += f"<b>ಭವಿಷ್ಯತ್ತಿನ ಕಾಲ:</b> {person} ನಾಳೆ {obj} {tenses[2]}<br><br>"
+    html += "</div>"
+    return html
 
-# ✅ Generate ZIP of HTMLs in-memory
-zip_buffer = BytesIO()
-with zipfile.ZipFile(zip_buffer, "w") as zf:
-    for verb in verbs:
-        html_data = generate_html(verb)
-        zf.writestr(f"{verb}.html", html_data)
+if st.button("✨ ವಾಕ್ಯ ರಚಿಸು"):
+    if verb.strip() and obj.strip():
+        html_output = generate_sentences(verb, obj)
+        st.markdown(html_output, unsafe_allow_html=True)
 
-zip_buffer.seek(0)
-
-# ✅ HTML ZIP download button
-st.download_button(
-    label="⬇️ Download All 50 HTML Files (ZIP)",
-    data=zip_buffer,
-    file_name="Kannada_Verbs_HTML.zip",
-    mime="application/zip"
-)
-
-# ✅ Optional DOCX download (if installed)
-if DOCX_AVAILABLE:
-    st.markdown("---")
-    st.subheader("📄 DOCX Version (Optional)")
-    doc = Document()
-    doc.add_heading("ಕನ್ನಡ ಕ್ರಿಯಾಪದ ಪಾಠಗಳು", level=1)
-    for verb in verbs:
-        doc.add_heading(verb, level=2)
-        doc.add_paragraph(f"ನಾನು ನಿನ್ನೆ {verb}ದೆಯೆ.")
-        doc.add_paragraph(f"ನಾನು ಈಗ {verb}ತ್ತಿದ್ದೇನೆ.")
-        doc.add_paragraph(f"ನಾನು ನಾಳೆ {verb}ತ್ತೇನೆ.")
-    doc_buffer = BytesIO()
-    doc.save(doc_buffer)
-    doc_buffer.seek(0)
-
-    st.download_button(
-        label="⬇️ Download DOCX Version",
-        data=doc_buffer,
-        file_name="Kannada_Verbs.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
-else:
-    st.warning("⚠️ DOCX library not found. Add `python-docx` to requirements.txt to enable DOCX export.")
+        # Download as HTML
+        html_file = f"""
+        <html>
+        <head><meta charset="UTF-8"><title>{verb} Sentences</title></head>
+        <body>{html_output}</body></html>
+        """
+        buffer = BytesIO(html_file.encode('utf-8'))
+        st.download_button("⬇️ HTML ಫೈಲ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ", buffer, file_name=f"{verb}.html", mime="text/html")
+    else:
+        st.warning("ದಯವಿಟ್ಟು ಕ್ರಿಯಾಪದ ಮತ್ತು ವಸ್ತು ನಮೂದಿಸಿ.")
