@@ -1,2 +1,2 @@
-tk
+streamlit
 python-docx
